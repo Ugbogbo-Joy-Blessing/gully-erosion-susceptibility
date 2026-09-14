@@ -41,17 +41,22 @@ var slope = ee.Terrain.slope(dem).rename('Slope');
 var aspect = ee.Terrain.aspect(dem).rename('Aspect');
 
 // B. Hydrology (Topographic Wetness Index - TWI)
-var upa = ee.Image("MERIT/Hydro/v1_0_1").select('upa').clip(roi); 
+var upa = ee.Image("MERIT/Hydro/v1_0_1").select('upa').clip(roi);
+
 var twi = ee.Image().expression(
   'log((upa * 1000000) / tan(slope * 3.14159 / 180))', {
-    upa: upa, 
-    slope: slope.where(slope.eq(0), 0.001) 
+    upa: upa,
+    slope: slope.where(slope.eq(0), 0.001)
 }).rename('TWI');
 
 // C. Vegetation (Sentinel-2 10m Cloud-Masked NDVI)
 function maskS2clouds(image) {
   var qa = image.select('QA60');
-  var mask = qa.bitwiseAnd(1 << 10).eq(0).and(qa.bitwiseAnd(1 << 11).eq(0));
+
+  var mask = qa
+    .bitwiseAnd(1 << 10).eq(0)
+    .and(qa.bitwiseAnd(1 << 11).eq(0));
+
   return image.updateMask(mask);
 }
 
@@ -61,20 +66,39 @@ var s2 = ee.ImageCollection("COPERNICUS/S2_SR_HARMONIZED")
   .map(maskS2clouds)
   .median()
   .clip(roi);
-var ndvi = s2.normalizedDifference(['B8', 'B4']).rename('NDVI');
+
+var ndvi = s2
+  .normalizedDifference(['B8', 'B4'])
+  .rename('NDVI');
 
 // D. Land Cover (ESA WorldCover 10m)
-var lulc = ee.ImageCollection("ESA/WorldCover/v200").first().clip(roi).rename('LULC');
+var lulc = ee.ImageCollection("ESA/WorldCover/v200")
+  .first()
+  .clip(roi)
+  .rename('LULC');
 
 // E. Climate (CHIRPS 10-Year Average Rainfall)
 var rainfall = ee.ImageCollection("UCSB-CHG/CHIRPS/DAILY")
   .filterDate('2016-01-01', '2025-12-31')
-  .sum().divide(10)
-  .clip(roi).rename('Rainfall');
+  .sum()
+  .divide(10)
+  .clip(roi)
+  .rename('Rainfall');
 
 // F. Soil Texture (OpenLandMap 250m Sand & Clay)
-var sand = ee.Image("OpenLandMap/SOL/SOL_SAND-WFRACTION_USDA-3A1A1A_M/v02").select('b0').clip(roi).rename('Sand');
-var clay = ee.Image("OpenLandMap/SOL/SOL_CLAY-WFRACTION_USDA-3A1A1A_M/v02").select('b0').clip(roi).rename('Clay');
+var sand = ee.Image(
+  "OpenLandMap/SOL/SOL_SAND-WFRACTION_USDA-3A1A1A_M/v02"
+)
+  .select('b0')
+  .clip(roi)
+  .rename('Sand');
+
+var clay = ee.Image(
+  "OpenLandMap/SOL/SOL_CLAY-WFRACTION_USDA-3A1A1A_M/v02"
+)
+  .select('b0')
+  .clip(roi)
+  .rename('Clay');
 
 // ------------------------------------------------------------------------------
 // 4. BATCH EXPORT ALL RASTERS TO GOOGLE DRIVE
@@ -92,6 +116,7 @@ var rasters = [
 ];
 
 rasters.forEach(function(item) {
+
   Export.image.toDrive({
     image: item.img,
     description: item.name,
@@ -99,4 +124,5 @@ rasters.forEach(function(item) {
     region: roi,
     maxPixels: 1e13
   });
+
 });
