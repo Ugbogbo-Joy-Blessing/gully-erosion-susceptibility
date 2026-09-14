@@ -1,0 +1,7 @@
+Class,Precision,Recall,F1-score
+Stable terrain (Class 0),0.91,0.88,0.89
+Gully erosion (Class 1),0.89,0.92,0.9
+
+Overall accuracy,89.50%
+Cohen's kappa,0.79
+AUC-ROC,0.92

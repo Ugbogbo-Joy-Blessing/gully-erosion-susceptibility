@@ -1,0 +1,13 @@
+Rank in final variable-importance chart,Predictor,Category
+1,Rainfall,Climate
+2,NDVI,Vegetation / spectral
+3,Clay,Soil
+4,Elevation,Topography
+5,Sand fraction,Soil
+6,LULC,Land cover
+7,TWI,Hydrology / terrain
+8,Slope,Topography
+9,SPI,Hydrology / terrain
+10,Plan curvature,Topography
+11,Aspect,Topography
+12,Distance to road,Anthropogenic / proximity

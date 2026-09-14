@@ -1,0 +1,8 @@
+Class,Count,Source / construction
+Gully presence,120,"Historical literature, high-resolution Google Earth imagery, and direct field GPS coordinate surveys"
+Gully absence,120,"Randomly generated across reported stable, flat urban zones"
+
+Train/test split,70/30
+Model,Random Forest
+Tuning,GridSearchCV
+Cross-validation,5-fold (reported in project abstract/defence)
