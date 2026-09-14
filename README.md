@@ -1,169 +1,219 @@
 # Gully Erosion Susceptibility Modelling in Benin Metropolis Using Random Forest
 
-## Project overview
+A geospatial machine-learning project integrating topographic, environmental, soil, climatic and anthropogenic variables to model gully erosion susceptibility across Benin Metropolis, Edo State, Nigeria.
 
-This project applies **remote sensing, GIS and machine learning** to model gully-erosion susceptibility across **Benin Metropolis, Edo State, Nigeria**.
+The workflow combines **Google Earth Engine, GIS, remote sensing, field-supported gully inventory data and Python-based Random Forest modelling** to produce a continuous spatial susceptibility surface and identify the environmental variables most strongly associated with observed gully occurrence.
 
-The analysis integrates terrain, vegetation, rainfall, soil, land-cover and proximity information with a labelled gully inventory. A **Random Forest** model was trained to learn the non-linear relationships between known gully occurrence and the surrounding environmental conditions, and the fitted model was then used to produce a spatial susceptibility map.
+---
 
-The study covers the metropolitan core of **Oredo, Egor and Ikpoba Okha LGAs**.
+## Project Overview
 
-## Key result
+Gully erosion is a major environmental and infrastructural challenge across Benin Metropolis. Intense rainfall, highly erodible soils, changing vegetation and land cover, terrain characteristics, concentrated runoff and urban development interact to create conditions favourable to gully formation.
 
-The final Random Forest model achieved:
+This project applies a spatial data science workflow to investigate those relationships and answer two main questions:
 
-- **AUC-ROC:** 0.92
-- **Overall accuracy:** 89.50%
-- **Cohen's kappa:** 0.79
-- **Gully-class precision:** 0.89
-- **Gully-class recall:** 0.92
-- **Gully-class F1-score:** 0.90
+1. Where are areas with relatively high gully erosion susceptibility across Benin Metropolis?
+2. Which environmental and topographic variables are most important in distinguishing observed gully locations from stable-terrain locations?
 
-![ROC-AUC curve](outputs/figures/roc_auc_curve.png)
+A **Random Forest classifier** was trained using a balanced inventory of gully-presence and stable-terrain observations together with raster-based conditioning factors.
 
-## Study area
+The resulting model was then applied spatially to generate a continuous gully susceptibility probability surface.
 
-![Benin Metropolis study area](outputs/maps/study_area.png)
+---
 
-The project focused on the urban and peri-urban Benin metropolitan area and modelled susceptibility across the three core LGAs.
+## Study Area
 
-## Data and modelling workflow
+The analysis covers **Benin Metropolis, Edo State, Nigeria**, with emphasis on:
 
-```text
-Multi-source geospatial data
-        ↓
-Preprocessing and factor derivation
-        ↓
-Gully-presence / absence inventory
-        ↓
-Extract predictor values at labelled points
-        ↓
-Random Forest
-        ↓
-5-fold stratified cross-validation
-        ↓
-Cross-validated diagnostics + ROC-AUC
-        ↓
-Fit full labelled dataset
-        ↓
-Spatial probability prediction
-        ↓
-Spatial probability prediction
-        ↓
-Gully-susceptibility map
-```
+- Oredo LGA
+- Egor LGA
+- Ikpoba-Okha LGA
 
-### Main data streams
+The study area lies within the humid tropical environment of southern Nigeria and is strongly influenced by the poorly consolidated sandy materials associated with the Benin Formation.
 
-| Data stream | Example source / role |
-|---|---|
-| Terrain | SRTM DEM for elevation and terrain derivatives |
-| Multispectral imagery | Sentinel-2 for NDVI and land-cover information |
-| Climate and soil | Rainfall and soil-property layers |
-| Human / proximity factors | Road-distance information |
-| Gully inventory | Literature, Google Earth imagery and field GPS coordinates |
+![Study Area](outputs/maps/study_area.png)
 
-## Google Earth Engine preprocessing code
+---
 
-The repository includes the original GEE extraction script used for the preprocessing stage:
+## Project Objectives
 
-[`gee/benin_metropolis_master_extraction.js`](gee/benin_metropolis_master_extraction.js)
+The project was designed to:
 
-That script constructs the three-LGA Benin Metropolis boundary and exports nine raster inputs: **Elevation, Slope, Aspect, TWI, NDVI, LULC, Rainfall, Sand and Clay**.
+- acquire and preprocess multi-source geospatial datasets;
+- derive relevant topographic, hydrological and environmental conditioning factors;
+- compile a spatial inventory of known gully locations and contrasting stable-terrain locations;
+- extract raster predictor values at training locations;
+- train a Random Forest model for binary gully-occurrence classification;
+- evaluate model performance using stratified cross-validation and standard classification metrics;
+- examine model-derived variable importance;
+- generate a continuous gully susceptibility probability raster; and
+- present the continuous model output as interpretable susceptibility classes for GIS-based decision support.
 
-The final model contains additional predictors prepared later in the workflow, so the preprocessing exports and final model-input list are documented separately rather than being treated as the same thing.
+---
 
-## Ground-truth / training inventory
+## Data Sources
 
-The project reports a balanced inventory of:
+The project integrates several geospatial datasets from different sources.
 
-- **120 gully-presence points**
-- **120 gully-absence points**
+| Dataset | Source | Approximate Resolution | Application |
+|---|---|---:|---|
+| Elevation | SRTM | 30 m | Terrain representation |
+| Slope | SRTM-derived | 30 m | Terrain steepness |
+| Aspect | SRTM-derived | 30 m | Slope orientation |
+| TWI | MERIT Hydro / terrain-derived | 30 m | Topographic wetness |
+| NDVI | Sentinel-2 | 10 m | Vegetation condition |
+| LULC | ESA WorldCover | 10 m | Land-cover characteristics |
+| Rainfall | CHIRPS | ~5 km native | Climatic influence |
+| Sand fraction | OpenLandMap | 250 m | Soil texture |
+| Clay fraction | OpenLandMap | 250 m | Soil texture |
+| Additional terrain/proximity predictors | GIS-derived | Analysis dependent | Final model inputs |
 
-Presence locations were compiled using **historical scientific literature, high-resolution Google Earth imagery and direct field GPS coordinate surveys**. Stable-terrain locations were used as the contrasting absence class.
+The Google Earth Engine script included in this repository exports **nine core raster datasets**. Additional predictors represented in the final model were prepared during the subsequent GIS modelling workflow.
 
-The supplied Python implementation evaluates the labelled dataset using **5-fold stratified cross-validation**. Cross-validated class predictions and probabilities are used to calculate the confusion matrix, classification report and ROC-AUC.
+---
 
-## Final model predictors
+## Gully Inventory
 
-The completed written report refers to 13 conditioning factors in several places. The **final variable-importance output displays 12 predictors**, while the supplied Python script dynamically trains on **every `.tif` file present in the workspace** rather than hard-coding a predictor list.
+The modelling dataset was built using two classes:
 
-For portfolio documentation, the final variable-importance chart is therefore used to describe the predictors represented in the reported final model output:
+- **120 gully-presence locations**
+- **120 contrasting stable-terrain locations**
+
+Gully-presence locations were compiled using a combination of:
+
+- historical scientific literature;
+- high-resolution Google Earth imagery; and
+- direct field GPS coordinate surveys.
+
+Stable-terrain locations were used as the contrasting absence class for binary model training.
+
+This produced a balanced labelled dataset of **240 observations**.
+
+---
+
+## Final Model Predictors
+
+The written project report contains inconsistent references to the total number of conditioning factors.
+
+For this portfolio, the **final reported variable-importance output is used as the reference for the fitted feature set and contains 12 predictors**.
+
+The supplied Python script does not hard-code predictor names. Instead, it dynamically loads the `.tif` predictor rasters available in the modelling workspace.
+
+The predictors represented in the final reported model output are:
 
 1. Rainfall
 2. NDVI
 3. Clay
 4. Elevation
-5. Sand fraction
+5. Sand Fraction
 6. LULC
 7. TWI
 8. Slope
 9. SPI
-10. Plan curvature
+10. Plan Curvature
 11. Aspect
-12. Distance to road
+12. Distance to Road
 
-![Random Forest variable importance](outputs/figures/variable_importance.png)
+This distinction keeps the repository aligned with the final model output while preserving the behaviour of the original executable script.
 
-The final importance result identifies **rainfall and NDVI as the two strongest individual predictors**, followed by soil and terrain variables.
+---
 
-## Conditioning-factor outputs
+## Workflow
 
-### Aspect
+The project follows the general workflow:
 
-![Aspect map](outputs/maps/aspect.png)
+```text
+Multi-source geospatial datasets
+            ↓
+Google Earth Engine preprocessing
+            ↓
+Terrain / environmental conditioning factors
+            ↓
+GIS processing and preparation of additional predictors
+            ↓
+Gully-presence + stable-terrain inventory
+            ↓
+Raster values extracted at training locations
+            ↓
+Python / scikit-learn
+            ↓
+Random Forest binary classifier
+            ↓
+5-fold stratified cross-validation
+            ↓
+Accuracy + Precision + Recall + F1 + ROC-AUC
+            ↓
+Variable importance
+            ↓
+Final model fitted to labelled dataset
+            ↓
+Pixel-wise probability prediction
+            ↓
+Continuous susceptibility raster (0–1)
+            ↓
+GIS susceptibility classification
+            ↓
+Very Low → Low → Moderate → High → Very High
+```
 
-### Clay fraction
+---
 
-![Clay-fraction map](outputs/maps/clay_fraction.png)
+## Google Earth Engine Preprocessing
 
-### Elevation
+Google Earth Engine was used to prepare several of the core geospatial predictors.
 
-![Elevation map](outputs/maps/elevation.png)
+The supplied GEE script:
 
-Elevation in the project results ranges from approximately **-3 m to 126 m**.
+- constructs the Benin Metropolis boundary from Oredo, Egor and Ikpoba-Okha;
+- exports the study-area boundary;
+- extracts SRTM elevation;
+- derives slope and aspect;
+- combines MERIT Hydro contributing-area information with terrain slope for TWI;
+- creates a Sentinel-2 NDVI composite;
+- extracts ESA WorldCover LULC;
+- calculates a 2016–2025 mean annual rainfall surface from CHIRPS;
+- extracts OpenLandMap sand fraction; and
+- extracts OpenLandMap clay fraction.
 
-### Sand fraction
+The script exports nine raster layers for subsequent GIS and machine-learning processing.
 
-![Sand-fraction map](outputs/maps/sand_fraction.png)
+See:
 
-### Slope
+`gee/benin_metropolis_master_extraction.js`
 
-![Slope map](outputs/maps/slope.png)
+---
 
-Most of the mapped terrain is relatively flat to undulating, while locally steeper sections occur along drainage and incised terrain.
+## Python / Random Forest Implementation
 
-### NDVI
+The machine-learning stage was implemented in **Python using scikit-learn, GeoPandas and Rasterio**.
 
-![NDVI map](outputs/maps/ndvi.png)
+The supplied script:
 
-The reported NDVI range is approximately **-0.3 to 0.8**, representing built/bare surfaces through to denser vegetation.
+1. mounts the Google Drive project workspace;
+2. reads `Final_Training_Points.shp`;
+3. discovers the `.tif` predictor rasters in the workspace;
+4. extracts raster values at each labelled training point;
+5. constructs the predictor matrix and binary target;
+6. defines the Random Forest classifier;
+7. performs 5-fold stratified cross-validation;
+8. generates cross-validated class predictions;
+9. generates cross-validated probability predictions;
+10. calculates model diagnostics;
+11. fits the Random Forest to the complete labelled dataset;
+12. calculates feature importance;
+13. aligns raster dimensions to a master raster where required;
+14. applies the fitted model spatially; and
+15. exports a continuous gully-susceptibility probability raster.
 
-### Plan curvature
+See:
 
-![Plan-curvature map](outputs/maps/plan_curvature.png)
+`python/random_forest_susceptibility_model.py`
 
-### Rainfall
+---
 
-![Rainfall map](outputs/maps/rainfall.png)
+## Random Forest Configuration
 
-The project used a reported 2016-2025 rainfall average ranging from approximately **1,782 to 2,407 mm/year** across the study area.
-
-### Stream Power Index (SPI)
-
-![SPI map](outputs/maps/spi.png)
-
-### Topographic Wetness Index (TWI)
-
-![TWI map](outputs/maps/twi.png)
-
-## Python model implementation
-
-The original Colab/Python modelling script is included at:
-
-[`python/random_forest_susceptibility_model.py`](python/random_forest_susceptibility_model.py)
-
-The actual implementation uses:
+The supplied final Python implementation uses:
 
 ```python
 RandomForestClassifier(
@@ -175,81 +225,244 @@ RandomForestClassifier(
 )
 ```
 
-with:
+Model evaluation uses:
 
 ```python
-StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
+StratifiedKFold(
+    n_splits=5,
+    shuffle=True,
+    random_state=42
+)
 ```
 
-The script uses `cross_val_score` and `cross_val_predict` for validation, computes ROC-AUC from cross-validated probabilities, then fits the model on the full labelled dataset to create the continuous susceptibility raster.
+together with:
 
-It also uses Rasterio to align rasters whose dimensions differ before applying the fitted model across the study area.
+- `cross_val_score`
+- `cross_val_predict`
+- confusion matrix
+- classification report
+- ROC curve
+- AUC
 
-## Final susceptibility map
+The final model is subsequently fitted to the complete labelled dataset before spatial prediction.
 
-![Gully erosion susceptibility map](outputs/maps/gully_susceptibility.png)
+---
 
-The final map classifies the model output into:
+## Implementation Note
 
-- Very Low
-- Low
-- Moderate
-- High
+The repository contains the **original Google Earth Engine preprocessing script and original Python/Colab Random Forest modelling script** used for the project.
+
+The executable workflow is documented directly from these supplied scripts.
+
+The final Python implementation uses fixed Random Forest parameters and **5-fold stratified cross-validation** rather than a 70/30 train-test implementation.
+
+Cross-validated class predictions and probabilities are used for model diagnostics. The model is subsequently fitted to the full labelled dataset to generate the continuous spatial susceptibility surface.
+
+Where narrative methodology text in the written project differs from the executable implementation, this repository reports the behaviour of the supplied code.
+
+---
+
+## Model Performance
+
+The final reported model performance was:
+
+| Metric | Result |
+|---|---:|
+| Overall Accuracy | **89.50%** |
+| Kappa Coefficient | **0.79** |
+| AUC-ROC | **0.92** |
+| Stable Terrain Precision | 0.91 |
+| Stable Terrain Recall | 0.88 |
+| Stable Terrain F1-Score | 0.89 |
+| Gully Precision | 0.89 |
+| Gully Recall | 0.92 |
+| Gully F1-Score | 0.90 |
+
+The **AUC-ROC of 0.92** indicates strong discrimination between observed gully-presence and stable-terrain observations within the validation framework used in this project.
+
+### ROC Curve
+
+![ROC-AUC Curve](outputs/figures/roc_auc_curve.png)
+
+---
+
+## Variable Importance
+
+Random Forest feature importance was used to examine the relative contribution of the predictor variables.
+
+The final reported ranking was:
+
+1. Rainfall
+2. NDVI
+3. Clay
+4. Elevation
+5. Sand Fraction
+6. LULC
+7. TWI
+8. Slope
+9. SPI
+10. Plan Curvature
+11. Aspect
+12. Distance to Road
+
+![Variable Importance](outputs/figures/variable_importance.png)
+
+Rainfall and NDVI emerged as the strongest individual predictors in the final importance output, followed by soil and terrain-related variables.
+
+These importance values describe the model's predictive structure and should not be interpreted as proof that an individual variable independently causes gully formation.
+
+---
+
+## From Model Probability to Susceptibility Classes
+
+The Random Forest script predicts a **continuous probability of gully occurrence from 0 to 1** using `predict_proba`.
+
+For final GIS interpretation and cartographic communication, this continuous probability surface was represented using five susceptibility classes:
+
+```text
+Random Forest probability (0–1)
+              ↓
+GIS susceptibility classification
+              ↓
+Very Low
+Low
+Moderate
+High
+Very High
+```
+
+The five susceptibility categories are therefore a **cartographic interpretation of the continuous model output**.
+
+The Random Forest itself was trained as a **binary classifier** using:
+
+```text
+0 = Stable terrain
+1 = Gully occurrence
+```
+
+It was **not trained as a five-class classifier**.
+
+---
+
+## Final Gully Susceptibility Map
+
+The fitted Random Forest model was applied across the predictor raster stack to produce a continuous probability surface.
+
+The final cartographic product represents this surface as:
+
+- Very Low susceptibility
+- Low susceptibility
+- Moderate susceptibility
+- High susceptibility
 - Very High susceptibility
 
-Higher-susceptibility areas were interpreted in relation to concentrated runoff pathways, slope transitions, exposed/low-vegetation surfaces, soil conditions and urban drainage effects.
+![Gully Erosion Susceptibility Map](outputs/maps/gully_susceptibility.png)
 
-## Model performance
+The susceptibility map is intended as a **spatial screening and decision-support product**, identifying locations whose environmental characteristics are similar to those associated with observed gully occurrence in the training inventory.
 
-| Class / metric | Result |
-|---|---:|
-| Stable-terrain precision | 0.91 |
-| Stable-terrain recall | 0.88 |
-| Stable-terrain F1 | 0.89 |
-| Gully precision | 0.89 |
-| Gully recall | 0.92 |
-| Gully F1 | 0.90 |
-| Overall accuracy | **89.50%** |
-| Cohen's kappa | **0.79** |
-| AUC-ROC | **0.92** |
+It should not be interpreted as a deterministic prediction of where or when a future gully will form.
 
-The strong gully recall is particularly useful for susceptibility screening because it indicates that the fitted model captured a high proportion of the labelled gully locations in the evaluation data.
+---
 
-## Research contribution
+## Selected Conditioning-Factor Maps
 
-The project moves beyond site-by-site description of individual gullies and develops a **metropolis-scale predictive susceptibility model**. It combines Earth-observation data, terrain analysis, field-supported inventory information and machine learning within one spatial modelling workflow.
+### Elevation
 
-The resulting map is intended as a **decision-support layer** for identifying areas that may warrant closer investigation, drainage intervention, development control or higher-resolution field assessment.
+![Elevation](outputs/maps/elevation.png)
 
-## Limitations
+### Slope
 
-- The susceptibility map predicts **relative likelihood**, not the exact time or magnitude of future gully failure.
-- The model is dependent on the quality and spatial representativeness of the gully inventory and predictor layers.
-- Terrain modelling relies partly on **30 m SRTM elevation data**, which cannot capture all micro-topographic features relevant to gully initiation.
-- Predictor datasets originate from different spatial resolutions and sources.
-- Five-fold random stratified cross-validation provides useful predictive validation, but it does not fully test geographic transferability to completely separate spatial areas.
-- The project does not perform geotechnical slope-stability analysis, subsurface soil testing or engineering design of erosion-control structures.
-- Higher-resolution UAV, LiDAR or field-survey data could improve future micro-topographic modelling.
+![Slope](outputs/maps/slope.png)
 
-## Implementation note
+### NDVI
 
-The repository now contains the **original GEE preprocessing code and original Python/Colab Random Forest code supplied for the project**. Where the narrative thesis methodology and the executable code differ, the code sections in this repository describe what the supplied scripts actually implement. In particular, the Python script uses fixed Random Forest parameters and 5-fold stratified cross-validation; it does not implement a 70/30 split or GridSearchCV.
+![NDVI](outputs/maps/ndvi.png)
 
-## Repository structure
+### Rainfall
+
+![Rainfall](outputs/maps/rainfall.png)
+
+### Topographic Wetness Index
+
+![TWI](outputs/maps/twi.png)
+
+### Stream Power Index
+
+![SPI](outputs/maps/spi.png)
+
+### Plan Curvature
+
+![Plan Curvature](outputs/maps/plan_curvature.png)
+
+### Sand Fraction
+
+![Sand Fraction](outputs/maps/sand_fraction.png)
+
+### Clay Fraction
+
+![Clay Fraction](outputs/maps/clay_fraction.png)
+
+### Aspect
+
+![Aspect](outputs/maps/aspect.png)
+
+---
+
+## Key Findings
+
+The project demonstrates that gully susceptibility across Benin Metropolis reflects the combined influence of climatic, vegetation, soil and terrain conditions.
+
+The final Random Forest importance output identified **rainfall and NDVI as the strongest individual predictors**, followed by soil characteristics and terrain-related variables.
+
+The susceptibility surface also demonstrates that gully susceptibility is spatially heterogeneous across the metropolis rather than uniformly distributed.
+
+The resulting map can support preliminary identification of areas requiring closer field investigation, environmental monitoring or erosion-control planning.
+
+---
+
+## Tools and Technologies
+
+- Google Earth Engine
+- ArcGIS / GIS processing
+- Remote Sensing
+- Google Earth
+- GPS field verification
+- Python
+- Google Colab
+- GeoPandas
+- Rasterio
+- NumPy
+- Pandas
+- scikit-learn
+- Random Forest
+- Stratified Cross-Validation
+- ROC-AUC Analysis
+- Raster Susceptibility Modelling
+
+---
+
+## Repository Structure
 
 ```text
 gully-erosion-susceptibility-benin/
+│
 ├── README.md
 ├── .gitignore
+├── requirements.txt
+│
 ├── gee/
 │   ├── benin_metropolis_master_extraction.js
 │   └── README.md
+│
 ├── python/
 │   ├── random_forest_susceptibility_model.py
 │   └── README.md
+│
 ├── workflow/
 │   └── README.md
+│
 └── outputs/
+    │
     ├── maps/
     │   ├── study_area.png
     │   ├── aspect.png
@@ -262,21 +475,100 @@ gully-erosion-susceptibility-benin/
     │   ├── rainfall.png
     │   ├── spi.png
     │   ├── twi.png
-    │   └── gully_susceptibility.png
+    │   ├── gully_susceptibility.png
+    │   └── README.md
+    │
     ├── figures/
     │   ├── roc_auc_curve.png
-    │   └── variable_importance.png
+    │   ├── variable_importance.png
+    │   └── README.md
+    │
     └── tables/
         ├── final_model_predictors.csv
+        ├── model_performance.csv
         ├── gully_inventory_summary.csv
-        └── model_performance.csv
+        └── README.md
 ```
-
-## Tools and methods
-
-**Google Earth Engine · GIS · Remote Sensing · SRTM · MERIT Hydro · Sentinel-2 · ESA WorldCover · CHIRPS · OpenLandMap · Google Earth · GPS Field Verification · Python · scikit-learn · Random Forest · ROC-AUC · Spatial Susceptibility Modelling**
 
 ---
 
-**Joy Ugbogbo**  
+## Reproducibility
+
+To reproduce the modelling workflow:
+
+1. Prepare the study-area predictor rasters.
+2. Ensure all predictors are available as `.tif` files in the modelling workspace.
+3. Prepare `Final_Training_Points.shp` with a binary `Class` field.
+4. Place the training shapefile and predictor rasters in:
+
+```text
+/content/drive/MyDrive/Benin_Gully_Project/
+```
+
+5. Run:
+
+```text
+python/random_forest_susceptibility_model.py
+```
+
+The script will:
+
+- sample predictor values at the training locations;
+- perform 5-fold stratified cross-validation;
+- calculate classification diagnostics and ROC-AUC;
+- fit the final Random Forest model;
+- calculate variable importance; and
+- generate `Benin_Gully_Susceptibility.tif`.
+
+The exact model feature set depends on the `.tif` predictor rasters present in the workspace.
+
+---
+
+## Limitations
+
+Several limitations should be considered when interpreting the results:
+
+- predictor datasets have different native spatial resolutions;
+- raster resampling and alignment introduce scale-related uncertainty;
+- susceptibility represents statistical association rather than deterministic future gully occurrence;
+- the model is dependent on the spatial distribution and quality of the gully inventory;
+- randomly generated stable-terrain locations may not represent every possible non-gully landscape condition;
+- standard random stratified cross-validation does not fully measure geographic transferability to spatially independent areas;
+- medium-resolution elevation data may not capture small-scale terrain features relevant to gully initiation;
+- the analysis does not include detailed subsurface geotechnical testing;
+- the project does not model three-dimensional slope stability or physically simulate drainage hydraulics.
+
+Future work could incorporate spatial-block validation, higher-resolution UAV or LiDAR-derived elevation data, expanded field inventories and comparison with additional machine-learning algorithms.
+
+---
+
+## Practical Application
+
+The resulting susceptibility map can support:
+
+- preliminary geohazard screening;
+- environmental monitoring;
+- urban development planning;
+- prioritisation of field inspections;
+- erosion-control planning;
+- drainage and infrastructure assessment; and
+- identification of locations where more detailed engineering investigation may be warranted.
+
+The map is best used as a **decision-support layer**, alongside field observations and engineering or geotechnical assessment where site-specific decisions are required.
+
+---
+
+## Author
+
+**Joy Ugbogbo**
+
 GIS & Remote Sensing Analyst | Spatial Data Science
+
+Areas of interest:
+
+- GIS & Spatial Analysis
+- Remote Sensing
+- Earth Observation
+- Environmental Modelling
+- Machine Learning for Geospatial Applications
+- Python for Spatial Data Analysis
